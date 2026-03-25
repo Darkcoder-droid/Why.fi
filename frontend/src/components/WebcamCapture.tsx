@@ -87,6 +87,7 @@ const WebcamCapture: React.FC = () => {
   const memeAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeMemeRef = useRef<MemeScene | null>(null);
   const fallbackSoundTimerRef = useRef<number | null>(null);
+  const playbackRequestRef = useRef(0);
 
   const [error, setError] = useState<string | null>(null);
   const [currentTarget, setCurrentTarget] = useState<EmojiName>('happy');
@@ -118,6 +119,8 @@ const WebcamCapture: React.FC = () => {
   }, [activeMeme]);
 
   const stopMemePlayback = () => {
+    playbackRequestRef.current += 1;
+
     if (fallbackSoundTimerRef.current) {
       window.clearTimeout(fallbackSoundTimerRef.current);
       fallbackSoundTimerRef.current = null;
@@ -251,7 +254,12 @@ const WebcamCapture: React.FC = () => {
 
   const playMemeSceneAudio = async (scene: MemeScene) => {
     stopMemePlayback();
+    const requestId = playbackRequestRef.current;
     const isAudioReady = await unlockAudio();
+
+    if (requestId !== playbackRequestRef.current) {
+      return;
+    }
 
     if (scene.audioSrc) {
       const audio = new Audio(scene.audioSrc);
@@ -262,15 +270,24 @@ const WebcamCapture: React.FC = () => {
 
       try {
         await audio.play();
+        if (requestId !== playbackRequestRef.current) {
+          audio.pause();
+          audio.currentTime = 0;
+          return;
+        }
         setAudioBlocked(false);
         return;
       } catch {
-        memeAudioRef.current = null;
+        if (memeAudioRef.current === audio) {
+          memeAudioRef.current = null;
+        }
+        audio.pause();
+        audio.currentTime = 0;
         setAudioBlocked(true);
       }
     }
 
-    if (isAudioReady) {
+    if (isAudioReady && requestId === playbackRequestRef.current) {
       playFallbackMemeSound(scene.expression);
     }
   };
@@ -321,7 +338,7 @@ const WebcamCapture: React.FC = () => {
 
   useEffect(() => {
     const retryAudio = () => {
-      if (!activeMemeRef.current || completeRef.current || isFree) {
+      if (!audioBlocked || !activeMemeRef.current || completeRef.current || isFree) {
         return;
       }
 
@@ -335,7 +352,7 @@ const WebcamCapture: React.FC = () => {
       window.removeEventListener('pointerdown', retryAudio);
       window.removeEventListener('keydown', retryAudio);
     };
-  }, [isFree]);
+  }, [audioBlocked, isFree]);
 
   useEffect(() => {
     if (isFree || completeRef.current) {
