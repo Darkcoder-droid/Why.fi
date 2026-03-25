@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  getRandomMemeScene,
   getMemePalette,
+  getMemeSceneForExpression,
   getMemeTitle,
   type MemeExpression,
   type MemeScene,
@@ -9,7 +9,7 @@ import {
 
 const EMOJIS = ['happy', 'sad', 'angry', 'surprise', 'neutral'] as const;
 const MAX_SCORE = 5;
-const MEME_DURATION_MS = 5000;
+const FALLBACK_MEME_SOUND_MS = 1400;
 
 const browserHost = window.location.hostname || 'localhost';
 const backendHttpBase = `http://${browserHost}:8001`;
@@ -71,6 +71,9 @@ const getRandomTarget = (exclude?: string): EmojiName => {
   return target;
 };
 
+const isMemeExpression = (emoji: string): emoji is MemeExpression =>
+  emoji === 'happy' || emoji === 'sad' || emoji === 'angry' || emoji === 'surprise';
+
 const WebcamCapture: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -80,13 +83,10 @@ const WebcamCapture: React.FC = () => {
   const sendIntervalRef = useRef<number | null>(null);
   const scoreRef = useRef(0);
   const targetRef = useRef<EmojiName>('happy');
-  const currentEmojiRef = useRef('none');
   const completeRef = useRef(false);
   const savingCaptureRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const memeRotationRef = useRef<number | null>(null);
   const memeAudioRef = useRef<HTMLAudioElement | null>(null);
-  const memeStopTimeoutRef = useRef<number | null>(null);
   const activeMemeRef = useRef<MemeScene | null>(null);
 
   const [error, setError] = useState<string | null>(null);
@@ -106,10 +106,6 @@ const WebcamCapture: React.FC = () => {
   }, [currentTarget]);
 
   useEffect(() => {
-    currentEmojiRef.current = currentEmoji;
-  }, [currentEmoji]);
-
-  useEffect(() => {
     scoreRef.current = gameScore;
   }, [gameScore]);
 
@@ -122,25 +118,11 @@ const WebcamCapture: React.FC = () => {
   }, [activeMeme]);
 
   const stopMemePlayback = () => {
-    if (memeStopTimeoutRef.current) {
-      window.clearTimeout(memeStopTimeoutRef.current);
-      memeStopTimeoutRef.current = null;
-    }
-
     if (memeAudioRef.current) {
       memeAudioRef.current.pause();
       memeAudioRef.current.currentTime = 0;
       memeAudioRef.current = null;
     }
-  };
-
-  const stopMemeRotation = () => {
-    if (memeRotationRef.current) {
-      window.clearInterval(memeRotationRef.current);
-      memeRotationRef.current = null;
-    }
-
-    stopMemePlayback();
   };
 
   const playTone = (frequency: number, durationMs: number, type: OscillatorType, volume = 0.03) => {
@@ -164,7 +146,7 @@ const WebcamCapture: React.FC = () => {
     oscillator.stop(now + durationMs / 1000);
   };
 
-  const playFallbackMemeSound = (expression: MemeExpression, durationMs = MEME_DURATION_MS) => {
+  const playFallbackMemeSound = (expression: MemeExpression, durationMs = FALLBACK_MEME_SOUND_MS) => {
     const audioContext = audioContextRef.current;
     if (!audioContext) {
       return;
@@ -228,9 +210,6 @@ const WebcamCapture: React.FC = () => {
 
       try {
         await audio.play();
-        memeStopTimeoutRef.current = window.setTimeout(() => {
-          stopMemePlayback();
-        }, MEME_DURATION_MS);
         return;
       } catch {
         memeAudioRef.current = null;
@@ -240,12 +219,16 @@ const WebcamCapture: React.FC = () => {
     playFallbackMemeSound(scene.expression);
   };
 
-  const rotateMemeScene = () => {
-    if (completeRef.current || isFree) {
+  const syncMemeToExpression = (emoji: string) => {
+    if (completeRef.current || isFree || !isMemeExpression(emoji)) {
       return;
     }
 
-    const nextScene = getRandomMemeScene(activeMemeRef.current?.expression ?? undefined);
+    if (activeMemeRef.current?.expression === emoji) {
+      return;
+    }
+
+    const nextScene = getMemeSceneForExpression(emoji, activeMemeRef.current?.imageSrc);
     setActiveMeme(nextScene);
     void playMemeSceneAudio(nextScene);
   };
@@ -273,27 +256,13 @@ const WebcamCapture: React.FC = () => {
     audioContextRef.current.resume().catch(() => undefined);
 
     return () => {
-      stopMemeRotation();
+      stopMemePlayback();
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => undefined);
         audioContextRef.current = null;
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (isFree || isComplete) {
-      stopMemeRotation();
-      return;
-    }
-
-    rotateMemeScene();
-    memeRotationRef.current = window.setInterval(rotateMemeScene, MEME_DURATION_MS);
-
-    return () => {
-      stopMemeRotation();
-    };
-  }, [isFree, isComplete]);
 
   const renderMemeCanvas = (
     scene: MemeScene | null,
@@ -365,7 +334,7 @@ const WebcamCapture: React.FC = () => {
     context.fill();
     context.fillStyle = '#fff8ea';
     context.font = '700 14px "Trebuchet MS", sans-serif';
-    context.fillText(`Cycle ${finished ? 'locked' : '5 sec'}`, 40, 260);
+    context.fillText(`Mode ${finished ? 'locked' : 'live face'}`, 40, 260);
 
     context.textAlign = 'right';
     context.fillStyle = 'rgba(17, 17, 17, 0.76)';
@@ -469,7 +438,7 @@ const WebcamCapture: React.FC = () => {
       if (nextScore >= MAX_SCORE) {
         setStatusMessage('Judgment complete. Reviewing your performance...');
         setIsComplete(true);
-        stopMemeRotation();
+        stopMemePlayback();
         stopStreaming();
         playCompletionChime();
         return;
@@ -499,6 +468,7 @@ const WebcamCapture: React.FC = () => {
 
         setWhyMeter(nextWhyMeter);
         setCurrentEmoji(nextEmoji);
+        syncMemeToExpression(nextEmoji);
 
         if (completeRef.current || savingCaptureRef.current || isFree) {
           return;
@@ -553,7 +523,7 @@ const WebcamCapture: React.FC = () => {
           context.drawImage(videoRef.current, 0, 0, frameCanvasRef.current.width, frameCanvasRef.current.height);
           const dataUrl = frameCanvasRef.current.toDataURL('image/jpeg', 0.5);
           wsRef.current.send(dataUrl);
-        }, 120);
+        }, 80);
       } catch (webcamError) {
         const message = webcamError instanceof Error ? webcamError.message : 'Unknown webcam error';
         setError(`Failed to access webcam: ${message}`);
@@ -615,7 +585,7 @@ const WebcamCapture: React.FC = () => {
   };
 
   const handleQuit = async () => {
-    stopMemeRotation();
+    stopMemePlayback();
 
     if (document.fullscreenElement && document.exitFullscreen) {
       await document.exitFullscreen().catch(() => undefined);
@@ -766,7 +736,7 @@ const WebcamCapture: React.FC = () => {
           <section className="panel-section">
             <div className="panel-heading">
               <h3>Meme Board</h3>
-              <p>Every 5 seconds the board swaps to a random meme image and matching sound.</p>
+              <p>The board snaps to the detected face so the meme image and sound stay on the same reaction.</p>
             </div>
             <canvas ref={memeCanvasRef} width={420} height={300} className="meme-canvas" />
           </section>

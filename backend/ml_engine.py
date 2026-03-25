@@ -1,5 +1,5 @@
 import base64
-from collections import Counter, deque
+from collections import deque
 import numpy as np
 import cv2
 import mediapipe as mp
@@ -40,7 +40,7 @@ class FaceAnalyzer:
             cls._instance.face_mesh = None
             cls._instance.initialization_error = None
             cls._instance.logged_runtime_error = False
-            cls._instance.emoji_history = deque(maxlen=5)
+            cls._instance.emoji_history = deque(maxlen=2)
         return cls._instance
 
     def _empty_result(self):
@@ -141,7 +141,7 @@ class FaceAnalyzer:
 
     def _smooth_emoji(self, emoji):
         self.emoji_history.append(emoji)
-        return Counter(self.emoji_history).most_common(1)[0][0]
+        return self.emoji_history[-1]
 
     def classify_emoji(self, landmarks):
         features = self._extract_features(landmarks)
@@ -155,26 +155,26 @@ class FaceAnalyzer:
         lip_to_nose = features["lip_to_nose"]
 
         is_surprised = (
-            eye_open > 0.30
-            and brow_raise > 0.08
-            and mouth_open > 0.16
+            eye_open > 0.26
+            and brow_raise > 0.068
+            and mouth_open > 0.11
         )
         is_happy = (
-            mouth_width > 0.42
-            and corner_drop < -0.015
-            and mouth_open < 0.22
+            mouth_width > 0.36
+            and corner_drop < -0.006
+            and mouth_open < 0.28
         )
         is_angry = (
-            brow_raise < 0.07
-            and brow_distance < 0.42
-            and brow_asymmetry < 0.018
-            and mouth_open < 0.16
+            brow_raise < 0.082
+            and brow_distance < 0.46
+            and brow_asymmetry < 0.03
+            and mouth_open < 0.22
         )
         is_sad = (
-            corner_drop > 0.012
-            and mouth_open < 0.24
-            and brow_raise > 0.07
-            and lip_to_nose > 0.08
+            corner_drop > 0.004
+            and mouth_open < 0.3
+            and brow_raise > 0.06
+            and lip_to_nose > 0.065
         )
 
         if is_surprised:
