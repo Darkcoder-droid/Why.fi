@@ -16,18 +16,18 @@ A highly interactive, absurd, and satisfying "emotion audition machine" that tur
 - ✓ Existing emotion detection and scoring
 - ✓ Existing capture of successful photos
 - ✓ Existing progress tracking through multiple rounds
+- ✓ Redesign main gameplay screen with a funny internet-native aesthetic and strong visual hierarchy (Validated in Phase 1: gameplay-ui-overhaul)
+- ✓ Implement a prominent "Target Expression" module (Validated in Phase 1)
+- ✓ Implement a reactive "Meme panel/board" that updates with detected emotion and audio (Validated in Phase 1)
+- ✓ Add live persistent metrics (Why score, Boredom, Confusion, Dread, Detected face, Progress) (Validated in Phase 1)
+- ✓ Add status banner / system voice messaging (Validated in Phase 1)
+- ✓ Implement captured successful photos gallery/strip (Validated in Phase 1)
+- ✓ Add game-like motion (target changes, detected changes, match confirmation, cooldown, score updates, final reveal) (Validated in Phase 1)
+- ✓ Ensure the layout works seamlessly on both desktop and laptop webcams without feeling like a generic dashboard (Validated in Phase 1)
 
 ### Active
 
-- [ ] Redesign main gameplay screen with a funny internet-native aesthetic and strong visual hierarchy
-- [ ] Implement a prominent "Target Expression" module
-- [ ] Implement a reactive "Meme panel/board" that updates with detected emotion and audio
-- [ ] Add live persistent metrics (Why score, Boredom, Confusion, Dread, Detected face, Progress)
-- [ ] Add status banner / system voice messaging
-- [ ] Implement captured successful photos gallery/strip
 - [ ] Redesign final judgment / results screen with average scores and captured evidence
-- [ ] Add game-like motion (target changes, detected changes, match confirmation, cooldown, score updates, final reveal)
-- [ ] Ensure the layout works seamlessly on both desktop and laptop webcams without feeling like a generic dashboard
 
 ### Out of Scope
 
@@ -50,7 +50,7 @@ The user wants to transform a functional webcam emotion app into a polished, hum
 | Use a pixel-art / meme-control-room aesthetic | Strengthens the absurd, chaotic, internet-native concept of the game. | — Pending |
 
 ---
-*Last updated: 2026-03-25 after initialization*
+*Last updated: 2026-03-25 after Phase 1 completion*
 
 ## Evolution
 
