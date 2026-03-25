@@ -47,5 +47,5 @@ pnpm-debug.log*
 # Tooling and local workspace artifacts
 .agent/agents/
 *.sqlite3
-.agent
-.planning
+.agent/
+.planning/
