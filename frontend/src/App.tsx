@@ -31,7 +31,7 @@ function App() {
   return (
     <main className="app-shell">
       <h1 className="app-title">why.fi</h1>
-      <p className="app-subtitle">Perform five expressions. The system is watching.</p>
+      <p className="app-subtitle">Survive five captures. The system is watching.</p>
       <WebcamCapture />
     </main>
   )

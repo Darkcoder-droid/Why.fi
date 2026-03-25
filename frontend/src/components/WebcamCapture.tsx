@@ -7,10 +7,11 @@ import {
   type MemeScene,
 } from '../data/memeMedia';
 
-const EMOJIS = ['happy', 'sad', 'surprise', 'neutral'] as const;
+const EMOJIS = ['happy', 'sad', 'surprise'] as const;
 const MAX_SCORE = 5;
 const FALLBACK_MEME_SOUND_MS = 1400;
 const SNAP_COOLDOWN_MS = 5000;
+const SNAP_COOLDOWN_STEPS = 10;
 
 const browserHost = window.location.hostname || 'localhost';
 const backendHttpBase = `http://${browserHost}:8001`;
@@ -91,7 +92,10 @@ const WebcamCapture: React.FC = () => {
   const playbackStopTimerRef = useRef<number | null>(null);
   const playbackRequestRef = useRef(0);
   const cooldownTimerRef = useRef<number | null>(null);
+  const cooldownIntervalRef = useRef<number | null>(null);
   const cooldownRef = useRef(false);
+  const pendingTargetRef = useRef<EmojiName | null>(null);
+  const pendingCompletionRef = useRef(false);
 
   const [error, setError] = useState<string | null>(null);
   const [currentTarget, setCurrentTarget] = useState<EmojiName>('happy');
@@ -106,6 +110,7 @@ const WebcamCapture: React.FC = () => {
   const [activeMeme, setActiveMeme] = useState<MemeScene | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
+  const [cooldownStep, setCooldownStep] = useState(0);
 
   useEffect(() => {
     targetRef.current = currentTarget;
@@ -144,6 +149,18 @@ const WebcamCapture: React.FC = () => {
       memeAudioRef.current.pause();
       memeAudioRef.current.currentTime = 0;
       memeAudioRef.current = null;
+    }
+  };
+
+  const clearCooldownTimers = () => {
+    if (cooldownTimerRef.current) {
+      window.clearTimeout(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+
+    if (cooldownIntervalRef.current) {
+      window.clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
     }
   };
 
@@ -358,10 +375,7 @@ const WebcamCapture: React.FC = () => {
 
     return () => {
       stopMemePlayback();
-      if (cooldownTimerRef.current) {
-        window.clearTimeout(cooldownTimerRef.current);
-        cooldownTimerRef.current = null;
-      }
+      clearCooldownTimers();
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => undefined);
         audioContextRef.current = null;
@@ -380,10 +394,14 @@ const WebcamCapture: React.FC = () => {
 
     window.addEventListener('pointerdown', retryAudio);
     window.addEventListener('keydown', retryAudio);
+    window.addEventListener('focus', retryAudio);
+    document.addEventListener('visibilitychange', retryAudio);
 
     return () => {
       window.removeEventListener('pointerdown', retryAudio);
       window.removeEventListener('keydown', retryAudio);
+      window.removeEventListener('focus', retryAudio);
+      document.removeEventListener('visibilitychange', retryAudio);
     };
   }, [audioBlocked, isFree]);
 
@@ -589,11 +607,10 @@ const WebcamCapture: React.FC = () => {
 
       const nextTarget = getRandomTarget(matchedEmoji);
       setIsCooldown(true);
-
-      if (cooldownTimerRef.current) {
-        window.clearTimeout(cooldownTimerRef.current);
-        cooldownTimerRef.current = null;
-      }
+      setCooldownStep(0);
+      pendingTargetRef.current = nextTarget;
+      pendingCompletionRef.current = nextScore >= MAX_SCORE;
+      clearCooldownTimers();
 
       if (isMemeExpression(matchedEmoji)) {
         const cooldownScene = getMemeSceneForExpression(matchedEmoji, activeMemeRef.current?.imageSrc);
@@ -603,22 +620,36 @@ const WebcamCapture: React.FC = () => {
         stopMemePlayback();
       }
 
-      setStatusMessage(`Captured ${getEmojiChar(matchedEmoji)}. Cooling down for 5 seconds...`);
+      setStatusMessage(`Captured ${getEmojiChar(matchedEmoji)}. Cooldown 1/${SNAP_COOLDOWN_STEPS}...`);
+
+      const stepDuration = SNAP_COOLDOWN_MS / SNAP_COOLDOWN_STEPS;
+      cooldownIntervalRef.current = window.setInterval(() => {
+        setCooldownStep((previous) => {
+          const nextStep = Math.min(previous + 1, SNAP_COOLDOWN_STEPS);
+          setStatusMessage(`Captured ${getEmojiChar(matchedEmoji)}. Cooldown ${nextStep}/${SNAP_COOLDOWN_STEPS}...`);
+          return nextStep;
+        });
+      }, stepDuration);
 
       cooldownTimerRef.current = window.setTimeout(() => {
+        clearCooldownTimers();
         setIsCooldown(false);
+        setCooldownStep(0);
 
-        if (nextScore >= MAX_SCORE) {
+        if (pendingCompletionRef.current) {
           setStatusMessage('Judgment complete. Reviewing your performance...');
           setIsComplete(true);
           stopMemePlayback();
           stopStreaming();
           playCompletionChime();
+          pendingCompletionRef.current = false;
           return;
         }
 
-        setCurrentTarget(nextTarget);
-        setStatusMessage(`Captured. New order: match ${getEmojiChar(nextTarget)}.`);
+        const resumedTarget = pendingTargetRef.current ?? nextTarget;
+        pendingTargetRef.current = null;
+        setCurrentTarget(resumedTarget);
+        setStatusMessage(`Captured. New order: match ${getEmojiChar(resumedTarget)}.`);
       }, SNAP_COOLDOWN_MS);
     } catch (captureError) {
       const message = captureError instanceof Error ? captureError.message : 'Unknown capture error';
@@ -762,10 +793,7 @@ const WebcamCapture: React.FC = () => {
 
   const handleQuit = async () => {
     stopMemePlayback();
-    if (cooldownTimerRef.current) {
-      window.clearTimeout(cooldownTimerRef.current);
-      cooldownTimerRef.current = null;
-    }
+    clearCooldownTimers();
 
     if (document.fullscreenElement && document.exitFullscreen) {
       await document.exitFullscreen().catch(() => undefined);
@@ -796,9 +824,10 @@ const WebcamCapture: React.FC = () => {
     { label: 'Existential Dread', value: `${Math.round(whyMeter.dread)}%` },
     { label: 'Detected Face', value: `${getEmojiChar(currentEmoji)} ${getEmojiLabel(currentEmoji)}` },
     { label: 'Meme Cycle', value: activeMeme ? getMemeTitle(activeMeme.expression) : 'Loading…' },
+    { label: 'Flow', value: isCooldown ? `${cooldownStep}/${SNAP_COOLDOWN_STEPS}` : 'Live' },
     {
       label: 'Meme Audio',
-      value: activeMeme?.audioSrc ? 'Custom file' : 'Fallback synth until files are added',
+      value: audioBlocked ? 'Recovering in background' : activeMeme?.audioSrc ? 'Custom file' : 'Fallback synth',
     },
   ];
 
@@ -819,7 +848,7 @@ const WebcamCapture: React.FC = () => {
         <div className="results-panel">
           <h2>Final Judgment</h2>
           <p className="results-summary">
-            Five expressions survived inspection. Average Why score: {averageWhyScore}%.
+            Five captures survived inspection. Average Why score: {averageWhyScore}%.
           </p>
 
           <div className="metrics-grid">
@@ -876,11 +905,6 @@ const WebcamCapture: React.FC = () => {
 
       <div className="overlay-container">
         <div className="video-stage">
-          {audioBlocked ? (
-            <button className="enter-btn" onClick={() => activeMemeRef.current && void playMemeSceneAudio(activeMemeRef.current)}>
-              ENABLE SOUND
-            </button>
-          ) : null}
           <div className="stage-summary">
             <div className="summary-pill">
               <span>Step</span>
@@ -898,7 +922,10 @@ const WebcamCapture: React.FC = () => {
           <video ref={videoRef} autoPlay playsInline muted className="video-feed" />
           <div className="status-banner">{statusMessage}</div>
           <div className="why-meter-container">
-            <div className="why-meter-fill" style={{ width: `${whyMeter.why_score}%` }} />
+            <div
+              className="why-meter-fill"
+              style={{ width: `${isCooldown ? (cooldownStep / SNAP_COOLDOWN_STEPS) * 100 : whyMeter.why_score}%` }}
+            />
           </div>
         </div>
 
@@ -906,7 +933,7 @@ const WebcamCapture: React.FC = () => {
           <section className="panel-section">
             <div className="panel-heading">
               <h3>Live Analysis</h3>
-              <p>Five expressions, cleaner signals, less guesswork.</p>
+              <p>Three live expressions, five captures, cleaner signals.</p>
             </div>
             <div className="live-metrics-grid">
               {liveMetrics.map((metric) => (
