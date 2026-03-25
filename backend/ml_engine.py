@@ -167,15 +167,6 @@ class FaceAnalyzer:
             and corner_drop < -0.006
             and mouth_open < 0.28
         )
-        is_angry = (
-            brow_raise < 0.09
-            and brow_distance < 0.4
-            and brow_asymmetry < 0.028
-            and eye_open < 0.285
-            and mouth_open < 0.24
-            and corner_drop > -0.028
-            and mouth_tension > 1.15
-        )
         is_sad = (
             corner_drop > 0.004
             and mouth_open < 0.3
@@ -187,8 +178,6 @@ class FaceAnalyzer:
             return self._smooth_emoji("surprise")
         if is_happy:
             return self._smooth_emoji("happy")
-        if is_angry:
-            return self._smooth_emoji("angry")
         if is_sad:
             return self._smooth_emoji("sad")
         return self._smooth_emoji("neutral")

@@ -1,4 +1,4 @@
-const MEME_EXPRESSIONS = ['happy', 'sad', 'angry', 'surprise'] as const;
+const MEME_EXPRESSIONS = ['happy', 'sad', 'surprise'] as const;
 
 export type MemeExpression = (typeof MEME_EXPRESSIONS)[number];
 
@@ -31,14 +31,13 @@ const compareAssetPath = (left: string, right: string) => {
 };
 
 const extractExpression = (assetPath: string): MemeExpression | null => {
-  const match = assetPath.match(/\/(happy|sad|angry|surprise)\//);
+  const match = assetPath.match(/\/(happy|sad|surprise)\//);
   return (match?.[1] as MemeExpression | undefined) ?? null;
 };
 
 const buildAssetMap = (): Record<MemeExpression, string[]> => ({
   happy: [],
   sad: [],
-  angry: [],
   surprise: [],
 });
 
@@ -72,8 +71,6 @@ export const getMemePalette = (expression: MemeExpression) => {
       return ['#ffd166', '#ef476f', '#f9844a'];
     case 'sad':
       return ['#4d7cfe', '#1d3557', '#8ecae6'];
-    case 'angry':
-      return ['#d90429', '#2b2d42', '#ef233c'];
     case 'surprise':
       return ['#90be6d', '#577590', '#f9c74f'];
   }

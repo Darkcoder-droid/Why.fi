@@ -7,7 +7,7 @@ import {
   type MemeScene,
 } from '../data/memeMedia';
 
-const EMOJIS = ['happy', 'sad', 'angry', 'surprise', 'neutral'] as const;
+const EMOJIS = ['happy', 'sad', 'surprise', 'neutral'] as const;
 const MAX_SCORE = 5;
 const FALLBACK_MEME_SOUND_MS = 1400;
 
@@ -44,8 +44,6 @@ const getEmojiChar = (name: string) => {
       return '😊';
     case 'sad':
       return '😢';
-    case 'angry':
-      return '😠';
     case 'surprise':
       return '😲';
     default:
@@ -72,7 +70,7 @@ const getRandomTarget = (exclude?: string): EmojiName => {
 };
 
 const isMemeExpression = (emoji: string): emoji is MemeExpression =>
-  emoji === 'happy' || emoji === 'sad' || emoji === 'angry' || emoji === 'surprise';
+  emoji === 'happy' || emoji === 'sad' || emoji === 'surprise';
 
 const WebcamCapture: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -101,6 +99,7 @@ const WebcamCapture: React.FC = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [isFree, setIsFree] = useState(false);
   const [activeMeme, setActiveMeme] = useState<MemeScene | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   useEffect(() => {
     targetRef.current = currentTarget;
@@ -147,6 +146,33 @@ const WebcamCapture: React.FC = () => {
     }
   };
 
+  const unlockAudio = async () => {
+    const isReady = await ensureAudioContextReady();
+    if (!isReady || !audioContextRef.current) {
+      setAudioBlocked(true);
+      return false;
+    }
+
+    try {
+      const now = audioContextRef.current.currentTime;
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+
+      gainNode.gain.setValueAtTime(0.0001, now);
+      oscillator.frequency.setValueAtTime(440, now);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.02);
+
+      setAudioBlocked(false);
+      return true;
+    } catch {
+      setAudioBlocked(true);
+      return false;
+    }
+  };
+
   const playTone = (frequency: number, durationMs: number, type: OscillatorType, volume = 0.03) => {
     const audioContext = audioContextRef.current;
     if (!audioContext) {
@@ -180,7 +206,6 @@ const WebcamCapture: React.FC = () => {
     > = {
       happy: { frequency: 440, harmonic: 660, type: 'triangle', harmonicType: 'sine' },
       sad: { frequency: 196, harmonic: 294, type: 'sine', harmonicType: 'triangle' },
-      angry: { frequency: 130, harmonic: 195, type: 'sawtooth', harmonicType: 'square' },
       surprise: { frequency: 523, harmonic: 784, type: 'square', harmonicType: 'triangle' },
     };
 
@@ -226,7 +251,7 @@ const WebcamCapture: React.FC = () => {
 
   const playMemeSceneAudio = async (scene: MemeScene) => {
     stopMemePlayback();
-    const isAudioReady = await ensureAudioContextReady();
+    const isAudioReady = await unlockAudio();
 
     if (scene.audioSrc) {
       const audio = new Audio(scene.audioSrc);
@@ -237,9 +262,11 @@ const WebcamCapture: React.FC = () => {
 
       try {
         await audio.play();
+        setAudioBlocked(false);
         return;
       } catch {
         memeAudioRef.current = null;
+        setAudioBlocked(true);
       }
     }
 
@@ -291,6 +318,24 @@ const WebcamCapture: React.FC = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const retryAudio = () => {
+      if (!activeMemeRef.current || completeRef.current || isFree) {
+        return;
+      }
+
+      void playMemeSceneAudio(activeMemeRef.current);
+    };
+
+    window.addEventListener('pointerdown', retryAudio);
+    window.addEventListener('keydown', retryAudio);
+
+    return () => {
+      window.removeEventListener('pointerdown', retryAudio);
+      window.removeEventListener('keydown', retryAudio);
+    };
+  }, [isFree]);
 
   useEffect(() => {
     if (isFree || completeRef.current) {
@@ -756,6 +801,11 @@ const WebcamCapture: React.FC = () => {
 
       <div className="overlay-container">
         <div className="video-stage">
+          {audioBlocked ? (
+            <button className="enter-btn" onClick={() => activeMemeRef.current && void playMemeSceneAudio(activeMemeRef.current)}>
+              ENABLE SOUND
+            </button>
+          ) : null}
           <div className="stage-summary">
             <div className="summary-pill">
               <span>Step</span>
