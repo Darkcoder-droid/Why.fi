@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  getRandomMemeAudioForExpression,
   getMemePalette,
   getMemeSceneForExpression,
   getMemeTitle,
@@ -302,10 +303,50 @@ const WebcamCapture: React.FC = () => {
       const audio = new Audio(scene.audioSrc);
       audio.preload = 'auto';
       audio.volume = 0.72;
-      audio.loop = durationMs === undefined;
+      audio.loop = false;
       memeAudioRef.current = audio;
 
       try {
+        audio.onended = () => {
+          if (
+            durationMs !== undefined ||
+            requestId !== playbackRequestRef.current ||
+            completeRef.current ||
+            isFree ||
+            cooldownRef.current ||
+            activeMemeRef.current?.expression !== scene.expression
+          ) {
+            return;
+          }
+
+          const nextAudioSrc = getRandomMemeAudioForExpression(scene.expression, scene.audioSrc);
+          if (!nextAudioSrc) {
+            playFallbackMemeSound(scene.expression);
+            return;
+          }
+
+          const nextScene = { ...scene, audioSrc: nextAudioSrc };
+          setActiveMeme(nextScene);
+        };
+
+        audio.onerror = () => {
+          if (requestId !== playbackRequestRef.current) {
+            return;
+          }
+
+          if (memeAudioRef.current === audio) {
+            memeAudioRef.current = null;
+          }
+
+          const fallbackAudioSrc = getRandomMemeAudioForExpression(scene.expression, scene.audioSrc);
+          if (fallbackAudioSrc) {
+            void playMemeSceneAudio({ ...scene, audioSrc: fallbackAudioSrc }, durationMs);
+            return;
+          }
+
+          setAudioBlocked(true);
+        };
+
         await audio.play();
         if (requestId !== playbackRequestRef.current) {
           audio.pause();
@@ -347,7 +388,7 @@ const WebcamCapture: React.FC = () => {
       return;
     }
 
-    const nextScene = getMemeSceneForExpression(emoji, activeMemeRef.current?.imageSrc);
+    const nextScene = getMemeSceneForExpression(emoji, activeMemeRef.current ?? undefined);
     setActiveMeme(nextScene);
   };
 
@@ -385,7 +426,7 @@ const WebcamCapture: React.FC = () => {
 
   useEffect(() => {
     const retryAudio = () => {
-      if (!audioBlocked || !activeMemeRef.current || completeRef.current || isFree || cooldownRef.current) {
+      if (!audioBlocked || !activeMemeRef.current || completeRef.current || isFree) {
         return;
       }
 
@@ -415,7 +456,7 @@ const WebcamCapture: React.FC = () => {
     }
 
     try {
-      const scene = getMemeSceneForExpression(currentTarget, activeMemeRef.current?.imageSrc);
+      const scene = getMemeSceneForExpression(currentTarget, activeMemeRef.current ?? undefined);
       setActiveMeme(scene);
     } catch {
       // Keep running if local meme assets are incomplete.
@@ -423,7 +464,7 @@ const WebcamCapture: React.FC = () => {
   }, [currentTarget, isCooldown, isFree]);
 
   useEffect(() => {
-    if (!activeMeme || isFree || completeRef.current || cooldownRef.current) {
+    if (!activeMeme || isFree || completeRef.current) {
       return;
     }
 
@@ -613,7 +654,7 @@ const WebcamCapture: React.FC = () => {
       clearCooldownTimers();
 
       if (isMemeExpression(matchedEmoji)) {
-        const cooldownScene = getMemeSceneForExpression(matchedEmoji, activeMemeRef.current?.imageSrc);
+        const cooldownScene = getMemeSceneForExpression(matchedEmoji, activeMemeRef.current ?? undefined);
         setActiveMeme(cooldownScene);
         void playMemeSceneAudio(cooldownScene, SNAP_COOLDOWN_MS);
       } else {

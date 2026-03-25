@@ -58,7 +58,18 @@ Object.entries(audioModules).forEach(([assetPath, assetUrl]) => {
   }
 });
 
-const pickRandom = (items: string[]) => items[Math.floor(Math.random() * items.length)];
+const pickRandom = (items: string[], exclude?: string) => {
+  if (items.length === 0) {
+    return undefined;
+  }
+
+  if (!exclude || items.length === 1 || !items.includes(exclude)) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  const filteredItems = items.filter((item) => item !== exclude);
+  return filteredItems[Math.floor(Math.random() * filteredItems.length)];
+};
 
 Object.values(memeImages).forEach((images) => images.sort(compareAssetPath));
 Object.values(memeAudio).forEach((audio) => audio.sort(compareAssetPath));
@@ -88,25 +99,33 @@ export const getRandomMemeScene = (exclude?: MemeExpression): MemeScene => {
 
   return {
     expression,
-    imageSrc: pickRandom(images),
+    imageSrc: pickRandom(images) ?? images[0],
     audioSrc: audio.length > 0 ? pickRandom(audio) : undefined,
   };
 };
 
-export const getMemeSceneForExpression = (expression: MemeExpression, previousImageSrc?: string): MemeScene => {
-  const images = memeImages[expression];
+export const getRandomMemeAudioForExpression = (expression: MemeExpression, previousAudioSrc?: string) => {
   const audio = memeAudio[expression];
+  return pickRandom(audio, previousAudioSrc);
+};
+
+export const getMemeSceneForExpression = (
+  expression: MemeExpression,
+  previousScene?: Partial<MemeScene>,
+): MemeScene => {
+  const images = memeImages[expression];
 
   if (images.length === 0) {
     throw new Error(`No meme images found for "${expression}"`);
   }
 
-  const currentIndex = previousImageSrc ? images.indexOf(previousImageSrc) : -1;
-  const nextIndex = images.length === 1 ? 0 : (currentIndex + 1) % images.length;
+  const previousImageSrc = previousScene?.expression === expression ? previousScene.imageSrc : undefined;
+  const previousAudioSrc = previousScene?.expression === expression ? previousScene.audioSrc : undefined;
+  const imageSrc = pickRandom(images, previousImageSrc) ?? images[0];
 
   return {
     expression,
-    imageSrc: images[nextIndex],
-    audioSrc: audio.length > 0 ? audio[nextIndex % audio.length] : undefined,
+    imageSrc,
+    audioSrc: getRandomMemeAudioForExpression(expression, previousAudioSrc),
   };
 };
