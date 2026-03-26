@@ -1,9 +1,10 @@
 import asyncio
 import base64
+import os
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -13,21 +14,47 @@ try:
 except ImportError:
     from ml_engine import FaceAnalyzer
 
-app = FastAPI()
 CAPTURES_DIR = Path(__file__).resolve().parent / "captures"
 CAPTURES_DIR.mkdir(exist_ok=True)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_origin_regex=r"http://.*:5173",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 analyzer = FaceAnalyzer()
-app.mount("/images", StaticFiles(directory=CAPTURES_DIR), name="captures")
+
+
+def _get_allowed_origins() -> list[str]:
+    configured_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        os.getenv("FRONTEND_ORIGIN", "").strip(),
+        os.getenv("VERCEL_PROJECT_PRODUCTION_URL", "").strip(),
+    ]
+    origins: list[str] = []
+
+    for origin in configured_origins:
+        if not origin:
+            continue
+        normalized = origin if "://" in origin else f"https://{origin}"
+        if normalized not in origins:
+            origins.append(normalized)
+
+    return origins
+
+
+def create_app() -> FastAPI:
+    application = FastAPI(title="why.fi backend")
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=_get_allowed_origins(),
+        allow_origin_regex=r"http://.*:5173",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    application.mount("/images", StaticFiles(directory=CAPTURES_DIR), name="captures")
+    application.mount("/api/images", StaticFiles(directory=CAPTURES_DIR), name="api-captures")
+    return application
+
+
+app = create_app()
 
 
 class CapturePayload(BaseModel):
@@ -37,6 +64,7 @@ class CapturePayload(BaseModel):
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     analyzer_status = analyzer.get_status()
     return {
@@ -46,7 +74,8 @@ def health():
 
 
 @app.post("/captures")
-async def save_capture(payload: CapturePayload):
+@app.post("/api/captures")
+async def save_capture(payload: CapturePayload, request: Request):
     if not payload.image:
         raise HTTPException(status_code=400, detail="Missing image data")
 
@@ -61,13 +90,15 @@ async def save_capture(payload: CapturePayload):
     filename = f"{payload.score:02d}-{safe_expression or 'capture'}-{uuid4().hex[:8]}.jpg"
     output_path = CAPTURES_DIR / filename
     output_path.write_bytes(file_bytes)
+    image_url = request.url_for("api-captures", path=filename)
 
     return {
         "filename": filename,
-        "url": f"http://localhost:8001/images/{filename}",
+        "url": str(image_url),
     }
 
 @app.websocket("/ws")
+@app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
