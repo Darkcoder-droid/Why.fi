@@ -2,6 +2,88 @@
 
 why.fi is a webcam-based emotion-mimic game with a Vite/React frontend in [frontend](/home/sonukumar/Documents/projects/why.fi/frontend) and a FastAPI backend in [backend](/home/sonukumar/Documents/projects/why.fi/backend).
 
+## One-command install
+
+These installers are intended for local development setup. Review them before running, because pipe-to-shell commands trade convenience for trust.
+
+Linux and macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash
+```
+
+Alternative with `wget`:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+iwr https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 -UseBasicParsing | iex
+```
+
+To auto-start both backend and frontend after installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | START_APP=1 bash
+```
+
+```powershell
+$env:START_APP="1"; iwr https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 -UseBasicParsing | iex
+```
+
+## Requirements
+
+- Linux: `apt`, `pacman`, or `dnf`
+- macOS: `brew`
+- Windows: `winget` or `choco`
+- GitHub access to clone `https://github.com/notysozu/why.fi.git`
+
+## Manual install fallback
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/notysozu/why.fi.git
+cd why.fi
+```
+
+2. Copy the sample environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Create a Python virtual environment and install backend dependencies:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r backend/requirements.txt
+```
+
+4. Install frontend dependencies:
+
+```bash
+cd frontend
+npm ci
+```
+
+5. Start the app:
+
+```bash
+cd ..
+.venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8001
+```
+
+```bash
+cd frontend
+npm run dev
+```
+
 ## Deployment split
 
 This repo is now configured for:
