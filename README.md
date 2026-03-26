@@ -2,27 +2,36 @@
 
 why.fi is a webcam-based emotion-mimic game with a Vite/React frontend in [frontend](/home/sonukumar/Documents/projects/why.fi/frontend) and a FastAPI backend in [backend](/home/sonukumar/Documents/projects/why.fi/backend).
 
-## Single Vercel deployment
+## Deployment split
 
-This repo is now configured to deploy as one Vercel project:
+This repo is now configured for:
 
-- The Vite frontend is built from [frontend](/home/sonukumar/Documents/projects/why.fi/frontend).
-- The built site is served from `frontend/dist`.
-- The Vercel Python entrypoint lives at [api/index.py](/home/sonukumar/Documents/projects/why.fi/api/index.py), which imports the FastAPI app from [backend/main.py](/home/sonukumar/Documents/projects/why.fi/backend/main.py).
-- The frontend uses same-origin API paths in production, so the browser talks to the backend through the same Vercel domain.
+- Vercel for the frontend
+- Fly.io for the backend
 
 The repo-level Vercel config lives in [vercel.json](/home/sonukumar/Documents/projects/why.fi/vercel.json).
-Python version is pinned with [.python-version](/home/sonukumar/Documents/projects/why.fi/.python-version).
-Python dependencies are duplicated in the root [requirements.txt](/home/sonukumar/Documents/projects/why.fi/requirements.txt) so Vercel can install the backend runtime cleanly.
+The Fly.io config lives in [fly.toml](/home/sonukumar/Documents/projects/why.fi/fly.toml).
 
-## How to deploy on Vercel
+## Frontend on Vercel
 
 1. Sign in to Vercel and click `Add New...` -> `Project`.
 2. Import this GitHub repository.
 3. Keep the root directory set to the repository root so Vercel can use [vercel.json](/home/sonukumar/Documents/projects/why.fi/vercel.json).
-4. In `Settings` -> `Environment Variables`, add `FRONTEND_ORIGIN` with your production domain, for example `https://why.fi`.
-5. Deploy once to verify the frontend loads and `/api/health` responds.
-6. After the project is linked, each push to the connected branch will redeploy both the frontend and backend in the same Vercel app.
+4. In `Settings` -> `Environment Variables`, add `VITE_API_URL` and set it to your Fly backend URL, for example `https://why-fi-api.fly.dev`.
+5. Deploy once to verify the frontend loads and can reach the backend.
+6. After the project is linked, every push to the connected branch will redeploy the frontend automatically.
+
+## Backend on Fly.io
+
+1. Install the Fly CLI and sign in with `fly auth login`.
+2. Update the `app` name in [fly.toml](/home/sonukumar/Documents/projects/why.fi/fly.toml) to a globally unique value before first deploy.
+3. From the repo root, launch the backend with `fly launch --config fly.toml --no-deploy` if the app does not exist yet.
+4. Set the frontend origin for CORS:
+   `fly secrets set FRONTEND_ORIGIN=https://your-frontend-domain.vercel.app`
+5. Deploy the backend with `fly deploy`.
+6. Check health with `https://<your-fly-app>.fly.dev/health`.
+
+Fly uses [backend/Dockerfile](/home/sonukumar/Documents/projects/why.fi/backend/Dockerfile) to build the Python service and exposes the FastAPI app from [backend/main.py](/home/sonukumar/Documents/projects/why.fi/backend/main.py).
 
 ## Local development
 
@@ -32,17 +41,17 @@ Run the frontend and backend separately during development:
 2. Start Vite from [frontend](/home/sonukumar/Documents/projects/why.fi/frontend).
 3. The frontend defaults to `http://127.0.0.1:8001` in dev mode, so no extra env var is required locally.
 
-`VITE_API_URL` is now optional. It is only useful if you want to point the frontend at a non-default API host for preview or staging builds.
+For production or preview builds on Vercel, `VITE_API_URL` should point to your Fly backend.
 
 ## Backend behavior
 
 [backend/main.py](/home/sonukumar/Documents/projects/why.fi/backend/main.py) now:
 
-- exposes a FastAPI `app` instance that Vercel can import
-- serves HTTP endpoints at both local paths like `/captures` and deployed paths like `/api/captures`
-- returns capture image URLs from `/api/images/...`
+- exposes a FastAPI `app`
+- serves HTTP endpoints like `/health` and `/captures`
+- returns capture image URLs from `/images/...`
 - allows CORS from localhost and your configured production domain
 
 ## Important caveat
 
-Vercel's Python serverless runtime is a good fit for normal HTTP endpoints such as `/api/health` and `/api/captures`. It is not a strong fit for persistent WebSocket connections, so the current realtime `/ws` emotion-streaming flow may still need a separate host or a different architecture for production.
+Fly.io is a much better fit than Vercel for this backend because it can run the full Python container with OpenCV, MediaPipe, and the realtime WebSocket endpoint. Capture images are still stored on the container filesystem, so they are not durable across machine replacement unless you add a Fly volume or external object storage.

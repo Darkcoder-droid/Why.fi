@@ -14,12 +14,10 @@ const FALLBACK_MEME_SOUND_MS = 1400;
 const SNAP_COOLDOWN_MS = 5000;
 const SNAP_COOLDOWN_STEPS = 10;
 
-const defaultApiUrl = import.meta.env.DEV ? 'http://127.0.0.1:8001' : '/api';
+const defaultApiUrl = import.meta.env.DEV ? 'http://127.0.0.1:8001' : window.location.origin;
 const configuredApiUrl = (import.meta.env.VITE_API_URL ?? defaultApiUrl).replace(/\/$/, '');
 const backendHttpBase = configuredApiUrl;
-const backendWsBase = configuredApiUrl.startsWith('/api')
-  ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api`
-  : configuredApiUrl.startsWith('https://')
+const backendWsBase = configuredApiUrl.startsWith('https://')
   ? configuredApiUrl.replace(/^https:\/\//, 'wss://')
   : configuredApiUrl.replace(/^http:\/\//, 'ws://');
 
