@@ -27,3 +27,6 @@ if (-Not (Test-Path ".env") -and (Test-Path ".env.example")) {
 }
 Write-Host "→ Building project..."
 if (Test-Path "frontend") { Set-Location frontend; npm run build; Set-Location .. }
+Write-Host "✓ Installation complete! To start:"
+Write-Host "frontend: cd frontend; npm run dev"
+Write-Host "backend: cd backend; .\venv\Scripts\activate.ps1; fastapi dev main.py"
