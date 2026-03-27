@@ -238,4 +238,6 @@ why.fi/
 We welcome your contributions! Please see our [Contributing Guide](CONTRIBUTING.md) to learn how to open an issue, submit a pull request, and adhere to our core coding standards.
 
 Please ensure that you read and uphold our [Code of Conduct](CODE_OF_CONDUCT.md) during your involvement with the project.
-<!-- AUDIT: Missing License section -->
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
