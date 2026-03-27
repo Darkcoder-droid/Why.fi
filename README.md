@@ -34,7 +34,7 @@ why.fi is a fullstack web application that delivers robust APIs and machine lear
 
 *Note: AI Agents must use these exact commands when operating in this repository.*
 
-### Installation
+### Security Guidelines\n> **Warning:** Piping to shell is convenient but can be risky. Always audit the raw script before execution. View the raw scripts here: [install.sh](install.sh) | [install.ps1](install.ps1)\n\n### Installation
 
 \n#### Quick Install (macOS/Linux)\n```bash\ncurl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash\n```\n\n#### Quick Install Alternative (macOS/Linux)\n```bash\nwget -qO- https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash\n```\n\n#### Quick Install (Windows)\n```powershell\niwr -useb https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 | iex\n```\n1. **Clone the repository:**
    ```bash
