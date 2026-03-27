@@ -21,3 +21,7 @@ if (Test-Path "backend") {
     pip install -r requirements-test.txt
     Set-Location ..
 }
+Write-Host "→ Configuring environment..."
+if (-Not (Test-Path ".env") -and (Test-Path ".env.example")) {
+    Copy-Item .env.example .env
+}
