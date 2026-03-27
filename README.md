@@ -18,9 +18,14 @@ why.fi is a fullstack web application that delivers robust APIs and machine lear
 - [Docker](https://www.docker.com/) (optional, for containerized deployments)
 
 ## Tech Stack
-- **Frontend**: React 19, TypeScript, Vite
-- **Backend**: Python 3, FastAPI, Pytest
-- **Tools**: ESLint, Docker
+
+| Category | Technologies |
+|---|---|
+| **Core Languages** | TypeScript, Python 3 |
+| **Frontend Frameworks** | React 19, Vite |
+| **Backend Frameworks** | FastAPI |
+| **Infrastructure** | Docker, PostgreSQL |
+| **Dev Tooling** | Pytest, ESLint |
 
 ---
 
