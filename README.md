@@ -169,7 +169,29 @@ You can quickly test the health of the backend directly via `curl`:
 curl -X GET "http://localhost:8000/api/health" \
      -H "Accept: application/json"
 ```
-<!-- AUDIT: Missing Configuration section (if applicable) -->
+## Configuration
+
+To customize your environment, copy `.env.example` to `.env` and configure the following variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `APPLICATION_ENV` | `development` | Deployment environment (development, production) |
+| `APP_PORT` | `3000` | Port for the main application |
+| `FRONTEND_URL` | `http://localhost:3000` | URL for the frontend application |
+| `BACKEND_URL` | `http://localhost:8000` | Base URL of the backend API |
+| `DB_HOST` | `localhost` | Database host address |
+| `DB_PORT` | `5432` | Database port number |
+| `DB_USER` | `admin` | Database username |
+| `DB_PASSWORD` | `secret` | Database password |
+| `DB_NAME` | `whyfi_db` | Name of the postgres database |
+| `JWT_SECRET` | *none* | Required for JWT token signing (Required) |
+| `JWT_EXPIRATION_HOURS` | `24` | Hours until a JWT token expires |
+| `SESSION_SECRET` | *none* | Required for secure session management (Required) |
+| `STRIPE_PUBLIC_KEY` | *none* | Public key for Stripe integration |
+| `STRIPE_SECRET_KEY` | *none* | Secret key for Stripe backend operations |
+| `SENDGRID_API_KEY` | *none* | API key for sending transactional emails |
+| `OPENAI_API_KEY` | *none* | API key for OpenAI integrations |
+| `ANTHROPIC_API_KEY` | *none* | API key for Anthropic Claude integrations |
 <!-- AUDIT: Missing Project Structure tree -->
 <!-- AUDIT: Missing Roadmap & Status -->
 
