@@ -197,7 +197,15 @@ To customize your environment, copy `.env.example` to `.env` and configure the f
 | `SENDGRID_API_KEY` | *none* | API key for sending transactional emails |
 | `OPENAI_API_KEY` | *none* | API key for OpenAI integrations |
 | `ANTHROPIC_API_KEY` | *none* | API key for Anthropic Claude integrations |
-<!-- AUDIT: Missing Project Structure tree -->
+## Project Structure
+
+```text
+why.fi/
+├── api/            # Serverless or legacy API functions
+├── backend/        # Python FastAPI application and ML engine
+├── frontend/       # React/Vite user interface
+└── tests/          # Integration and end-to-end tests
+```
 <!-- AUDIT: Missing Roadmap & Status -->
 
 ## AI Agent Setup
