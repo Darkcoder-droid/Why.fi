@@ -12,7 +12,10 @@ why.fi is a fullstack web application that delivers robust APIs and machine lear
 - **Intelligent Backends**: Exposes robust machine learning inference endpoints via FastAPI
 - **Reliable Code Quality**: Ensures stability with integrated ESLint and comprehensive Pytest suites
 - **Streamlined Deployments**: Simplifies environment setup through pre-configured Docker containerization
-<!-- AUDIT: Missing Prerequisites section -->
+## Prerequisites
+- [Node.js](https://nodejs.org/) ≥ 20.0
+- [Python](https://www.python.org/) ≥ 3.10
+- [Docker](https://www.docker.com/) (optional, for containerized deployments)
 
 ## Tech Stack
 - **Frontend**: React 19, TypeScript, Vite
