@@ -206,7 +206,15 @@ why.fi/
 ├── frontend/       # React/Vite user interface
 └── tests/          # Integration and end-to-end tests
 ```
-<!-- AUDIT: Missing Roadmap & Status -->
+## Roadmap & Status
+
+**Current Status:** `Beta` — Development is active, but core APIs may experience minor breaking changes.
+
+- [x] Establish foundational React and FastAPI infrastructure
+- [x] Configure robust continuous integration and linting pipelines
+- [ ] Implement robust user authentication and session management
+- [ ] Integrate Stripe for subscription billing workflows
+- [ ] Expand machine learning inference and pipeline tooling
 
 ## AI Agent Setup
 
