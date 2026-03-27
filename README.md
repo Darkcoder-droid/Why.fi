@@ -165,12 +165,12 @@ To start using why.fi locally, launch both the frontend and backend development 
    cd frontend
    npm run dev
    ```
-   *The web interface will start automatically via Vite on `http://localhost:5173`.*
+   *Vite automatically starts the web interface on `http://localhost:5173`.*
 
 <!-- TODO: add demo GIF -->
 
 ### API Example
-You can quickly test the health of the backend directly via `curl`:
+Test the backend health directly via `curl`:
 ```bash
 curl -X GET "http://localhost:8000/api/health" \
      -H "Accept: application/json"
@@ -245,4 +245,4 @@ Please ensure that you read and uphold our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project uses the MIT License. See [LICENSE](LICENSE) for details.
