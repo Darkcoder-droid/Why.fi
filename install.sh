@@ -35,3 +35,6 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
 fi
 echo "→ Building project..."
 if [ -d "frontend" ]; then cd frontend && npm run build && cd ..; fi
+echo "✓ Installation complete! To start:"
+echo "frontend: cd frontend && npm run dev"
+echo "backend: cd backend && source venv/bin/activate && fastapi dev main.py"
