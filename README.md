@@ -1,7 +1,12 @@
+<!-- AUDIT: Needs tagline and badges -->
 # why.fi
 
+<!-- AUDIT: Rewrite project overview for clarity and positioning (What, Who, Why, How) -->
 ## Project Overview
 why.fi is a modern fullstack web application. The frontend is built with React, TypeScript, and Vite. The backend is powered by Python (FastAPI/ML Engine), providing robust APIs and machine learning capabilities.
+
+<!-- AUDIT: Missing Features section -->
+<!-- AUDIT: Missing Prerequisites section -->
 
 ## Tech Stack
 - **Frontend**: React 19, TypeScript, Vite
@@ -14,6 +19,7 @@ why.fi is a modern fullstack web application. The frontend is built with React, 
 
 *Note: AI Agents must use these exact commands when operating in this repository.*
 
+<!-- AUDIT: Rewrite installation for end-to-end reproducibility -->
 ### Installation
 ```bash
 # Frontend
@@ -103,6 +109,11 @@ cd backend && find . -type d -name "__pycache__" -exec rm -r {} +
 
 ---
 
+<!-- AUDIT: Missing Usage examples -->
+<!-- AUDIT: Missing Configuration section (if applicable) -->
+<!-- AUDIT: Missing Project Structure tree -->
+<!-- AUDIT: Missing Roadmap & Status -->
+
 ## AI Agent Setup
 
 ### Configuration Files Table
@@ -119,3 +130,6 @@ cd backend && find . -type d -name "__pycache__" -exec rm -r {} +
 - **Claude Code**: Runs autonomously according to `CLAUDE.md`. Simply start `claude` in the terminal.
 - **Cursor**: The IDE will automatically read and enforce `.cursorrules` during code generation and editing.
 - **Copilot Workspace**: GitHub will parse `.github/copilot-instructions.md` to format pull requests and guide code changes.
+
+<!-- AUDIT: Missing Contributing guidelines -->
+<!-- AUDIT: Missing License section -->
