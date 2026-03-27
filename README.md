@@ -1,249 +1,196 @@
 # why.fi
 
-> A modern fullstack web application powering robust APIs and machine learning capabilities.
+why.fi is a webcam-based emotion-mimic game with a chaotic, pixel-art internet aesthetic. Players are given a target expression and have to satisfy the machine by matching it live on camera while the system scores the attempt in real time.
 
-![License](https://img.shields.io/github/license/notysozu/why.fi) ![Frontend](https://img.shields.io/badge/frontend-React%20%7C%20TypeScript-blue) ![Backend](https://img.shields.io/badge/backend-Python%20%7C%20FastAPI-green)
+## Purpose
 
-## Overview
-why.fi is a fullstack web application that delivers robust APIs and machine learning capabilities through a seamless user interface. Designed for developers and data scientists, it solves the complexity of integrating advanced ML models into production-ready web apps. By coupling a high-performance FastAPI backend with a reactive React frontend, why.fi provides an end-to-end framework that accelerates intelligent application development.
+The project exists to turn realtime facial-expression detection into a playful web game. It combines a meme-heavy front end with a webcam-driven FastAPI backend so the experience feels closer to an absurd arcade cabinet than a utility app.
 
 ## Features
-- **Fluid User Interfaces**: Delivers snappy, interactive frontends using React 19 and Vite
-- **Intelligent Backends**: Exposes robust machine learning inference endpoints via FastAPI
-- **Reliable Code Quality**: Ensures stability with integrated ESLint and comprehensive Pytest suites
-- **Streamlined Deployments**: Simplifies environment setup through pre-configured Docker containerization
 
-## Prerequisites
-- [Node.js](https://nodejs.org/) ≥ 20.0
-- [Python](https://www.python.org/) ≥ 3.10
-- [Docker](https://www.docker.com/) (optional, for containerized deployments)
+- realtime webcam analysis over WebSockets
+- expression targets for `happy`, `sad`, and `surprise`
+- automatic capture snapshots with per-round scoring
+- meme-driven audio and visual feedback
+- Vite + React frontend deployable on Vercel
+- FastAPI + MediaPipe backend deployable on Fly.io
 
-## Tech Stack
+## Project status
 
-| Category | Technologies |
-|---|---|
-| **Core Languages** | TypeScript, Python 3 |
-| **Frontend Frameworks** | React 19, Vite |
-| **Backend Frameworks** | FastAPI |
-| **Infrastructure** | Docker, PostgreSQL |
-| **Dev Tooling** | Pytest, ESLint |
+Active prototype. Core gameplay exists, deployment paths are documented, and the repository now includes baseline testing, CI, and maintainer docs.
 
----
+## One-command install
 
-## 🤖 AI Agent Commands (AUTHORITATIVE)
+These installers are intended for local development setup. Review them before running, because pipe-to-shell commands trade convenience for trust.
 
-*Note: AI Agents must use these exact commands when operating in this repository.*
+Linux and macOS:
 
-### Security Guidelines\n> **Warning:** Piping to shell is convenient but can be risky. Always audit the raw script before execution. View the raw scripts here: [install.sh](install.sh) | [install.ps1](install.ps1)\n\n### Installation
-
-\n#### Quick Install (macOS/Linux)\n```bash\ncurl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash\n```\n\n#### Quick Install Alternative (macOS/Linux)\n```bash\nwget -qO- https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash\n```\n\n#### Quick Install (Windows)\n```powershell\niwr -useb https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 | iex\n```\n1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/notysozu/why.fi.git
-   cd why.fi
-   ```
-
-2. **Set up the Frontend:**
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-3. **Set up the Backend:**
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   pip install -r requirements-test.txt
-   cd ..
-   ```
-
-4. **Verify Installation:**
-   ```bash
-   # Verify frontend dependencies
-   cd frontend && npm list vite
-   
-   # Verify backend dependencies
-   cd ../backend && python -c "import fastapi; print('FastAPI installed')"
-   ```
-
-### Development
 ```bash
-# Frontend
-cd frontend && npm run dev
-
-# Backend
-cd backend && fastapi dev main.py
+curl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash
 ```
 
-### Testing
+Alternative with `wget`:
+
 ```bash
-# Frontend (if configured)
-cd frontend && npm run test
-
-# Backend (All tests)
-cd backend && pytest
-
-# Backend (Watch mode)
-cd backend && pytest-watch
-
-# Backend (Coverage)
-cd backend && pytest --cov=.
+wget -qO- https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | bash
 ```
 
-### Linting & Formatting
-```bash
-# Frontend (Check)
-cd frontend && npm run lint
+Windows PowerShell:
 
-# Frontend (Fix)
-cd frontend && npm run lint -- --fix
+```powershell
+iwr https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 -UseBasicParsing | iex
 ```
 
-### Typechecking
+To auto-start both backend and frontend after installation:
+
 ```bash
-# Frontend
-cd frontend && npx tsc --noEmit
+curl -fsSL https://raw.githubusercontent.com/notysozu/why.fi/main/install.sh | START_APP=1 bash
 ```
 
-### Build
-```bash
-# Frontend
-cd frontend && npm run build
+```powershell
+$env:START_APP="1"; iwr https://raw.githubusercontent.com/notysozu/why.fi/main/install.ps1 -UseBasicParsing | iex
 ```
 
-### Database
+## Requirements
+
+- Linux: `apt`, `pacman`, or `dnf`
+- macOS: `brew`
+- Windows: `winget` or `choco`
+- GitHub access to clone `https://github.com/notysozu/why.fi.git`
+
+## Manual install fallback
+
+1. Clone the repository:
+
 ```bash
-# Migrate (Alembic placeholder - adjust to actual ORM if different)
-cd backend && alembic upgrade head
-
-# Seed (Placeholder script)
-cd backend && python scripts/seed.py
-
-# Reset (Placeholder script)
-cd backend && python scripts/reset_db.py
+git clone https://github.com/notysozu/why.fi.git
+cd why.fi
 ```
 
-### Docker
+2. Copy the sample environment file:
+
 ```bash
-# Start all services
-docker compose up -d
-
-# Stop all services
-docker compose down
-
-# Rebuild containers
-docker compose build
+cp .env.example .env
 ```
 
-### Clean
-```bash
-# Clean frontend modules
-cd frontend && rm -rf node_modules dist
+3. Create a Python virtual environment and install backend dependencies:
 
-# Clean Python cache
-cd backend && find . -type d -name "__pycache__" -exec rm -r {} +
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r backend/requirements.txt
 ```
 
----
+4. Install frontend dependencies:
+
+```bash
+cd frontend
+npm ci
+```
+
+5. Start the app:
+
+```bash
+cd ..
+.venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8001
+```
+
+```bash
+cd frontend
+npm run dev
+```
 
 ## Usage
 
-To start using why.fi locally, launch both the frontend and backend development servers.
+1. Start the backend and frontend locally.
+2. Open the frontend in a desktop browser with webcam access enabled.
+3. Match the target expression shown on screen.
+4. Let the game capture rounds automatically and react to your performance.
 
-1. **Start the Backend API:**
-   ```bash
-   cd backend
-   source venv/bin/activate
-   fastapi dev main.py
-   ```
-   *The API will be available at `http://localhost:8000`.*
+Screenshot placeholders:
 
-2. **Start the Frontend Client:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   *Vite automatically starts the web interface on `http://localhost:5173`.*
+- `docs/screenshots/gameplay.png`
+- `docs/screenshots/results.png`
 
-<!-- TODO: add demo GIF -->
+## Deployment split
 
-### API Example
-Test the backend health directly via `curl`:
-```bash
-curl -X GET "http://localhost:8000/api/health" \
-     -H "Accept: application/json"
-```
+This repo is now configured for:
 
-## Configuration
+- Vercel for the frontend
+- Fly.io for the backend
 
-To customize your environment, copy `.env.example` to `.env` and configure the following variables:
+The repo-level Vercel config lives in [vercel.json](/vercel.json).
+The Fly.io config lives in [fly.toml](/fly.toml).
 
-| Variable | Default | Description |
-|---|---|---|
-| `APPLICATION_ENV` | `development` | Deployment environment (development, production) |
-| `APP_PORT` | `3000` | Port for the main application |
-| `FRONTEND_URL` | `http://localhost:3000` | URL for the frontend application |
-| `BACKEND_URL` | `http://localhost:8000` | Base URL of the backend API |
-| `DB_HOST` | `localhost` | Database host address |
-| `DB_PORT` | `5432` | Database port number |
-| `DB_USER` | `admin` | Database username |
-| `DB_PASSWORD` | `secret` | Database password |
-| `DB_NAME` | `whyfi_db` | Name of the postgres database |
-| `JWT_SECRET` | *none* | Required for JWT token signing (Required) |
-| `JWT_EXPIRATION_HOURS` | `24` | Hours until a JWT token expires |
-| `SESSION_SECRET` | *none* | Required for secure session management (Required) |
-| `STRIPE_PUBLIC_KEY` | *none* | Public key for Stripe integration |
-| `STRIPE_SECRET_KEY` | *none* | Secret key for Stripe backend operations |
-| `SENDGRID_API_KEY` | *none* | API key for sending transactional emails |
-| `OPENAI_API_KEY` | *none* | API key for OpenAI integrations |
-| `ANTHROPIC_API_KEY` | *none* | API key for Anthropic Claude integrations |
+## Frontend on Vercel
 
-## Project Structure
+1. Sign in to Vercel and click `Add New...` -> `Project`.
+2. Import this GitHub repository.
+3. Keep the root directory set to the repository root so Vercel can use [vercel.json](/vercel.json).
+4. In `Settings` -> `Environment Variables`, add `VITE_API_URL` and set it to your Fly backend URL, for example `https://why-fi-api.fly.dev`.
+5. Deploy once to verify the frontend loads and can reach the backend.
+6. After the project is linked, every push to the connected branch will redeploy the frontend automatically.
 
-```text
-why.fi/
-├── api/            # Serverless or legacy API functions
-├── backend/        # Python FastAPI application and ML engine
-├── frontend/       # React/Vite user interface
-└── tests/          # Integration and end-to-end tests
-```
+## Backend on Fly.io
 
-## Roadmap & Status
+1. Install the Fly CLI and sign in with `fly auth login`.
+2. Update the `app` name in [fly.toml](/fly.toml) to a globally unique value before first deploy.
+3. From the repo root, launch the backend with `fly launch --config fly.toml --no-deploy` if the app does not exist yet.
+4. Set the frontend origin for CORS:
+   `fly secrets set FRONTEND_ORIGIN=https://your-frontend-domain.vercel.app`
+5. Deploy the backend with `fly deploy`.
+6. Check health with `https://<your-fly-app>.fly.dev/health`.
 
-**Current Status:** `Beta` — Development is active, but core APIs may experience minor breaking changes.
+Fly uses [backend/Dockerfile](/backend/Dockerfile) to build the Python service and exposes the FastAPI app from [backend/main.py](/backend/main.py).
 
-- [x] Establish foundational React and FastAPI infrastructure
-- [x] Configure robust continuous integration and linting pipelines
-- [ ] Implement robust user authentication and session management
-- [ ] Integrate Stripe for subscription billing workflows
-- [ ] Expand machine learning inference and pipeline tooling
+## Local development
 
-## AI Agent Setup
+Run the frontend and backend separately during development:
 
-### Configuration Files Table
-| File | Purpose |
-|------|---------|
-| `CLAUDE.md` | specific instructions for Claude Code / Claude.ai. |
-| `AGENTS.md` | Rules applied to all automated coding agents. |
-| `.cursorrules` | enforced IDE rules for the Cursor editor. |
-| `.github/copilot-instructions.md` | Rules for GitHub Copilot Workspaces and PRs. |
-| `README.md` | Core commands and instructions. |
-| `.env.example` | Environment variable template. |
+1. Start the FastAPI server from [backend](/backend).
+2. Start Vite from [frontend](/frontend).
+3. The frontend defaults to `http://127.0.0.1:8001` in dev mode, so no extra env var is required locally.
 
-### How to use with:
-- **Claude Code**: Runs autonomously according to `CLAUDE.md`. Simply start `claude` in the terminal.
-- **Cursor**: The IDE will automatically read and enforce `.cursorrules` during code generation and editing.
-- **Copilot Workspace**: GitHub will parse `.github/copilot-instructions.md` to format pull requests and guide code changes.
+For production or preview builds on Vercel, `VITE_API_URL` should point to your Fly backend.
+
+## Tech stack
+
+- Frontend: React 19, TypeScript, Vite
+- Backend: FastAPI, MediaPipe, OpenCV, NumPy
+- Tooling: ESLint, GitHub Actions
+- Deployment: Vercel for frontend, Fly.io for backend
+
+## Testing
+
+- Backend smoke tests: `python -m pip install -r backend/requirements-test.txt && pytest`
+- Frontend lint: `cd frontend && npm run lint`
+- Frontend build: `cd frontend && npm run build`
+
+## Backend behavior
+
+[backend/main.py](/backend/main.py) now:
+
+- exposes a FastAPI `app`
+- serves HTTP endpoints like `/health` and `/captures`
+- returns capture image URLs from `/images/...`
+- allows CORS from localhost and your configured production domain
+
+## Additional docs
+
+- [CONTRIBUTING.md](/CONTRIBUTING.md)
+- [SECURITY.md](/SECURITY.md)
+- [CODE_OF_CONDUCT.md](/CODE_OF_CONDUCT.md)
+- [LICENSE](/LICENSE)
 
 ## Contributing
 
-We welcome your contributions! Please see our [Contributing Guide](CONTRIBUTING.md) to learn how to open an issue, submit a pull request, and adhere to our core coding standards.
-
-Please ensure that you read and uphold our [Code of Conduct](CODE_OF_CONDUCT.md) during your involvement with the project.
+Contributions are welcome. Please read [CONTRIBUTING.md](/CONTRIBUTING.md) before opening a pull request, and use Conventional Commits for new changes.
 
 ## License
 
-This project uses the MIT License. See [LICENSE](LICENSE) for details.
-\n\n### Troubleshooting\nIf you experience issues, ensure permissions are correct and ports 3000/8000 are open.\n
+This project is licensed under the MIT License. See [LICENSE](/LICENSE).
+
+## Important caveat
+
+Fly.io is a much better fit than Vercel for this backend because it can run the full Python container with OpenCV, MediaPipe, and the realtime WebSocket endpoint. Capture images are still stored on the container filesystem, so they are not durable across machine replacement unless you add a Fly volume or external object storage.
